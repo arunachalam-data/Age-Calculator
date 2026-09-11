@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Age Calculator</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 20px;
+  }
+  .card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 30px 25px;
+    max-width: 400px;
+    width: 100%;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  }
+  h1 {
+    text-align: center;
+    color: #333;
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+  }
+  label {
+    display: block;
+    font-size: 0.9rem;
+    color: #555;
+    margin-bottom: 6px;
+    font-weight: 600;
+  }
+  input[type="date"] {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+    margin-bottom: 18px;
+  }
+  button {
+    width: 100%;
+    padding: 13px;
+    background: #00b09b;
+    background: linear-gradient(90deg, #00b09b, #96c93d);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.05rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.15s;
+  }
+  button:hover { transform: scale(1.02); }
+  .result {
+    margin-top: 22px;
+    padding: 16px;
+    background: #f4f9ff;
+    border-left: 4px solid #4facfe;
+    border-radius: 8px;
+    display: none;
+  }
+  .result p {
+    margin: 6px 0;
+    color: #333;
+    font-size: 0.98rem;
+  }
+  .result strong { color: #007991; }
+  .error {
+    color: #d9534f;
+    font-size: 0.9rem;
+    margin-top: -10px;
+    margin-bottom: 10px;
+    display: none;
+  }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <h1>🎂 Age Calculator</h1>
+  <label for="dob">Enter your Date of Birth</label>
+  <input type="date" id="dob">
+  <p class="error" id="error">Please select a valid date of birth (past date).</p>
+  <button onclick="calculateAge()">Calculate Age</button>
+
+  <div class="result" id="result">
+    <p>📌 Current Age: <strong id="currentAge"></strong></p>
+    <p>🎯 You turn 60 on: <strong id="sixtyDate"></strong></p>
+    <p>⏳ Time left to reach 60: <strong id="timeLeft"></strong></p>
+  </div>
+</div>
+
+<script>
+function calculateAge() {
+  const dobInput = document.getElementById('dob').value;
+  const errorEl = document.getElementById('error');
+  const resultEl = document.getElementById('result');
+
+  if (!dobInput) {
+    errorEl.textContent = "Please select your date of birth.";
+    errorEl.style.display = 'block';
+    resultEl.style.display = 'none';
+    return;
+  }
+
+  const dob = new Date(dobInput);
+  const today = new Date();
+
+  if (dob > today) {
+    errorEl.textContent = "Date of birth cannot be in the future.";
+    errorEl.style.display = 'block';
+    resultEl.style.display = 'none';
+    return;
+  }
+
+  errorEl.style.display = 'none';
+
+  // Current age calculation (years, months, days)
+  let years = today.getFullYear() - dob.getFullYear();
+  let months = today.getMonth() - dob.getMonth();
+  let days = today.getDate() - dob.getDate();
+
+  if (days < 0) {
+    months--;
+    const prevMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+    days += prevMonth.getDate();
+  }
+  if (months < 0) {
+    years--;
+    months += 12;
+  }
+
+  document.getElementById('currentAge').textContent =
+    `${years} years, ${months} months, ${days} days`;
+
+  // 60th birthday date
+  const sixtyDate = new Date(dob.getFullYear() + 60, dob.getMonth(), dob.getDate());
+  const options = { day: '2-digit', month: 'long', year: 'numeric' };
+  document.getElementById('sixtyDate').textContent = sixtyDate.toLocaleDateString('en-GB', options);
+
+  // Time left to 60
+  const diffTime = sixtyDate - today;
+  if (diffTime > 0) {
+    const totalDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    const yrsLeft = Math.floor(totalDays / 365.25);
+    const remDays = Math.floor(totalDays % 365.25);
+    document.getElementById('timeLeft').textContent =
+      `${yrsLeft} years, ${remDays} days (${totalDays} total days)`;
+  } else {
+    document.getElementById('timeLeft').textContent = "Already crossed 60! 🎉";
+  }
+
+  resultEl.style.display = 'block';
+}
+</script>
+
+</body>
+</html>
