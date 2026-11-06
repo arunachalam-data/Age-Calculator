@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Age Calculator</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 20px;
+  }
+  .card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 26px 22px;
+    max-width: 420px;
+    width: 100%;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  }
+  h1 {
+    text-align: center;
+    color: #333;
+    font-size: 1.4rem;
+    margin-bottom: 6px;
+  }
+  .tabs {
+    display: flex;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 2px solid #e0e0e0;
+  }
+  .tab {
+    flex: 1;
+    text-align: center;
+    padding: 10px 4px;
+    cursor: pointer;
+    background: #f4f4f4;
+    font-weight: 600;
+    font-size: 0.78rem;
+    color: #555;
+    transition: 0.2s;
+  }
+  .tab.active {
+    background: #00b09b;
+    color: #fff;
+  }
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  label {
+    display: block;
+    font-size: 0.9rem;
+    color: #555;
+    margin-bottom: 6px;
+    font-weight: 600;
+  }
+  .date-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+  .date-row input {
+    text-align: center;
+    padding: 12px 4px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+  }
+  .date-row input[name="dd"], .date-row input[name="mm"] { width: 25%; }
+  .date-row input[name="yyyy"] { width: 45%; }
+  .hint {
+    font-size: 0.78rem;
+    color: #888;
+    margin-bottom: 16px;
+  }
+  input[type="number"] {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+    margin-bottom: 6px;
+  }
+  button {
+    width: 100%;
+    padding: 13px;
+    background: linear-gradient(90deg, #00b09b, #96c93d);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.05rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 10px;
+  }
+  button:hover { opacity: 0.92; }
+  .result {
+    margin-top: 20px;
+    padding: 16px;
+    background: #f4f9ff;
+    border-left: 4px solid #4facfe;
+    border-radius: 8px;
+    display: none;
+  }
+  .result p { margin: 6px 0; color: #333; font-size: 0.95rem; }
+  .result strong { color: #007991; }
+  .error {
+    color: #d9534f;
+    font-size: 0.85rem;
+    margin-top: -4px;
+    margin-bottom: 10px;
+    display: none;
+  }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <h1>🎂 Age Calculator</h1>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('dob')">DOB</div>
+    <div class="tab" onclick="switchTab('reverse')">Voter ID Age</div>
+  </div>
+
+  <!-- PANEL 1: Normal DOB based calculator -->
+  <div class="panel active" id="panel-dob">
+    <label>Enter Date of Birth</label>
+    <div class="date-row">
+      <input type="number" id="dob_dd" placeholder="DD" min="1" max="31">
+      <input type="number" id="dob_mm" placeholder="MM" min="1" max="12">
+      <input type="number" id="dob_yyyy" placeholder="YYYY" min="1900" max="2026">
+    </div>
+    <p class="hint">Format: dd / mm / yyyy — type directly, no calendar needed</p>
+    <p class="error" id="error1"></p>
+    <button onclick="calculateFromDob()">Calculate Age</button>
+
+    <div class="result" id="result1">
+      <p>📌 Current Age: <strong id="currentAge"></strong></p>
+      <p>🎯 Turns 60 on: <strong id="sixtyDate"></strong></p>
+      <p>⏳ Time left to 60: <strong id="timeLeft"></strong></p>
+    </div>
+  </div>
+
+  <!-- PANEL 2: Reverse - find birth year from age at a given year -->
+  <div class="panel" id="panel-reverse">
+    <label>Age mentioned (e.g. Voter ID)</label>
+    <input type="number" id="rev_age" placeholder="e.g. 52" min="0" max="120">
+
+    <label>As on Year (e.g. 2025)</label>
+    <input type="number" id="rev_year" placeholder="e.g. 2025" min="1900" max="2026">
+
+    <label>As on Date (leave blank = 01/01 auto-used, standard voter ID rule)</label>
+    <div class="date-row">
+      <input type="number" id="rev_dd" placeholder="DD" min="1" max="31">
+      <input type="number" id="rev_mm" placeholder="MM" min="1" max="12">
+    </div>
+    <p class="hint">Indian electoral rolls calculate age as on 1st January of that year. Leave blank to auto-use 01/01.</p>
+    <p class="error" id="error2"></p>
+    <button onclick="calculateReverse()">Find Birth Year Range</button>
+
+    <div class="result" id="result2">
+      <p id="revMainResult"></p>
+      <p id="revRangeResult"></p>
+      <p id="revToday"></p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function switchTab(tab) {
+  document.getElementById('panel-dob').classList.toggle('active', tab === 'dob');
+  document.getElementById('panel-reverse').classList.toggle('active', tab === 'reverse');
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    t.classList.toggle('active', (tab === 'dob' && i === 0) || (tab === 'reverse' && i === 1));
+  });
+}
+
+function isValidDate(d, m, y) {
+  if (!d || !m || !y) return false;
+  const date = new Date(y, m - 1, d);
+  return date.getFullYear() == y && date.getMonth() == m - 1 && date.getDate() == d;
+}
+
+function calculateFromDob() {
+  const dd = parseInt(document.getElementById('dob_dd').value);
+  const mm = parseInt(document.getElementById('dob_mm').value);
+  const yyyy = parseInt(document.getElementById('dob_yyyy').value);
+  const errorEl = document.getElementById('error1');
+  const resultEl = document.getElementById('result1');
+
+  if (!isValidDate(dd, mm, yyyy)) {
+    errorEl.textContent = "Please enter a valid date (dd/mm/yyyy).";
+    errorEl.style.display = 'block';
+    resultEl.style.display = 'none';
+    return;
+  }
+
+  const dob = new Date(yyyy, mm - 1, dd);
+  const today = new Date();
+
+  if (dob > today) {
+    errorEl.textContent = "Date of birth cannot be in the future.";
+    errorEl.style.display = 'block';
+    resultEl.style.display = 'none';
+    return;
+  }
+  errorEl.style.display = 'none';
+
+  let years = today.getFullYear() - dob.getFullYear();
+  let months = today.getMonth() - dob.getMonth();
+  let days = today.getDate() - dob.getDate();
+  if (days < 0) {
+    months--;
+    const prevMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+    days += prevMonth.getDate();
+  }
+  if (months < 0) { years--; months += 12; }
+
+  document.getElementById('currentAge').textContent = `${years} years, ${months} months, ${days} days`;
+
+  const sixtyDate = new Date(dob.getFullYear() + 60, dob.getMonth(), dob.getDate());
+  const options = { day: '2-digit', month: 'long', year: 'numeric' };
+  document.getElementById('sixtyDate').textContent = sixtyDate.toLocaleDateString('en-GB', options);
+
+  const diffTime = sixtyDate - today;
+  if (diffTime > 0) {
+    const totalDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    const yrsLeft = Math.floor(totalDays / 365.25);
+    const remDays = Math.floor(totalDays % 365.25);
+    document.getElementById('timeLeft').textContent = `${yrsLeft} years, ${remDays} days (${totalDays} total days)`;
+  } else {
+    document.getElementById('timeLeft').textContent = "Already crossed 60! 🎉";
+  }
+
+  resultEl.style.display = 'block';
+}
+
+function calculateReverse() {
+  const age = parseInt(document.getElementById('rev_age').value);
+  const asOnYear = parseInt(document.getElementById('rev_year').value);
+  const dd = document.getElementById('rev_dd').value ? parseInt(document.getElementById('rev_dd').value) : null;
+  const mm = document.getElementById('rev_mm').value ? parseInt(document.getElementById('rev_mm').value) : null;
+  const errorEl = document.getElementById('error2');
+  const resultEl = document.getElementById('result2');
+
+  if (!age || !asOnYear || age < 0 || asOnYear < 1900) {
+    errorEl.textContent = "Please enter valid age and year.";
+    errorEl.style.display = 'block';
+    resultEl.style.display = 'none';
+    return;
+  }
+
+  // Default to 1st January if no exact date given (standard Indian electoral roll rule)
+  let useDD = dd, useMM = mm, autoUsed = false;
+  if (!dd || !mm) {
+    useDD = 1; useMM = 1; autoUsed = true;
+  } else if (!isValidDate(dd, mm, 2000)) {
+    errorEl.textContent = "Please enter a valid day/month.";
+    errorEl.style.display = 'block';
+    resultEl.style.display = 'none';
+    return;
+  }
+  errorEl.style.display = 'none';
+
+  const asOnDate = new Date(asOnYear, useMM - 1, useDD);
+
+  // Precise birth-date window: person's DOB lies strictly between
+  // (asOnDate - (age+1) years, exclusive) and (asOnDate - age years, inclusive)
+  const earliestPossible = new Date(asOnYear - age - 1, useMM - 1, useDD);
+  earliestPossible.setDate(earliestPossible.getDate() + 1); // exclusive -> next day
+  const latestPossible = new Date(asOnYear - age, useMM - 1, useDD);
+
+  const fmt = (d) => d.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+
+  const asOnLabel = `${String(useDD).padStart(2,'0')}/${String(useMM).padStart(2,'0')}/${asOnYear}`;
+
+  // Single best-estimate birth year: simple subtraction (as-on-year minus age)
+  const birthYear = asOnYear - age;
+
+  // Single estimated DOB in dd/mm/yyyy — uses same day/month as the reference date
+  const estDD = String(useDD).padStart(2, '0');
+  const estMM = String(useMM).padStart(2, '0');
+  const estimatedDOB = `${estDD}/${estMM}/${birthYear}`;
+
+  let mainMsg = `📅 As on <strong>${asOnLabel}</strong>${autoUsed ? ' (standard voter ID reference date)' : ''}, age was <strong>${age}</strong>.`;
+
+  let rangeMsg = `🎂 Estimated Date of Birth: <strong style="font-size:1.3rem;">${estimatedDOB}</strong>`;
+  rangeMsg += `<br><span style="font-size:0.8rem; color:#888;">(day/month is a best-estimate placeholder — only the year is derived from the age given)</span>`;
+
+  document.getElementById('revMainResult').innerHTML = mainMsg;
+  document.getElementById('revRangeResult').innerHTML = rangeMsg;
+
+  const today = new Date();
+  const currentYear = today.getFullYear();
+  document.getElementById('revToday').innerHTML =
+    `👤 Current age today (${currentYear}): <strong>${currentYear - birthYear}</strong> years`;
+
+  resultEl.style.display = 'block';
+}
+</script>
+
+</body>
+</html>
